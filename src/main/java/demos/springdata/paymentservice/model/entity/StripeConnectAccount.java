@@ -21,10 +21,8 @@ public class StripeConnectAccount {
 
     @Column(nullable = false, unique = true)
     private String tenantId;
-
     @Column(nullable = false)
     private String stripeAccountId;
-
-    private boolean chargesEnabled; // Дали Stripe са ги одобрили да получават пари
-    private boolean payoutsEnabled; // Дали могат да теглят пари към банката си
+    private boolean chargesEnabled;
+    private boolean payoutsEnabled;
 }
