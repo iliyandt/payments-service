@@ -18,7 +18,6 @@ public class StripeConnectAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-
     @Column(nullable = false, unique = true)
     private String tenantId;
     @Column(nullable = false)

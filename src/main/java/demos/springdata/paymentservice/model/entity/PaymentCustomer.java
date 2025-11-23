@@ -24,4 +24,7 @@ public class PaymentCustomer {
 
     @Column(nullable = false)
     private String stripeCustomerId;
+
+    @Column(nullable = false)
+    private String stripeConnectedAccountId;
 }

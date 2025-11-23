@@ -6,4 +6,7 @@ public record SubscriptionRequest(
         String employment
 ) {
 
+    public SubscriptionRequest(String subscriptionPlan, String employment) {
+        this(0, subscriptionPlan, employment);
+    }
 }

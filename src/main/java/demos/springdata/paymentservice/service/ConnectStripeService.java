@@ -3,13 +3,17 @@ package demos.springdata.paymentservice.service;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.AccountLink;
+import com.stripe.model.Customer;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.AccountCreateParams;
 import com.stripe.param.AccountLinkCreateParams;
+import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
+import demos.springdata.paymentservice.model.entity.PaymentCustomer;
 import demos.springdata.paymentservice.model.entity.StripeConnectAccount;
 import demos.springdata.paymentservice.repository.ConnectRepository;
+import demos.springdata.paymentservice.repository.PaymentCustomerRepository;
 import demos.springdata.paymentservice.web.dto.AccountLinkResponse;
 import demos.springdata.paymentservice.web.dto.ConnectedCheckoutRequest;
 import demos.springdata.paymentservice.web.dto.TenantDto;
@@ -18,17 +22,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class ConnectStripeService {
 
     private final ConnectRepository connectRepository;
     private static final Logger LOGGER = LoggerFactory.getLogger(ConnectStripeService.class);
+    private final PaymentCustomerRepository paymentCustomerRepository;
 
     @Autowired
-    public ConnectStripeService(ConnectRepository connectRepository) {
+    public ConnectStripeService(ConnectRepository connectRepository, PaymentCustomerRepository paymentCustomerRepository) {
         this.connectRepository = connectRepository;
+        this.paymentCustomerRepository = paymentCustomerRepository;
     }
 
     public Account createConnectedAccount(TenantDto tenant) throws StripeException {
@@ -116,8 +124,16 @@ public class ConnectStripeService {
         StripeConnectAccount connectAccount = connectRepository.findByStripeAccountId(stripeAccountId)
                 .orElseThrow(() -> new RuntimeException("Tenant not connected to Stripe"));
 
+        RequestOptions options = RequestOptions.builder()
+                .setStripeAccount(connectAccount.getStripeAccountId())
+                .build();
+
+
+        String customerId = getOrCreateStripeCustomer(request.getUserId().toString(), request.getEmail(), request.getName(), options);
+
         SessionCreateParams params =
                 SessionCreateParams.builder()
+                        .setCustomer(customerId)
                         .setSuccessUrl("https://damilsoft.com/success?session_id={CHECKOUT_SESSION_ID}")
                         .setCancelUrl("https://damilsoft.com/cancel")
                         .addLineItem(
@@ -142,17 +158,45 @@ public class ConnectStripeService {
                         .putMetadata("subscriptionPlan", request.getSubscriptionPlan())
                         .putMetadata("allowedVisits", String.valueOf(request.getAllowedVisits()))
                         .putMetadata("employment", request.getEmployment())
+                        .setCustomerUpdate(
+                                SessionCreateParams.CustomerUpdate.builder()
+                                        .setAddress(SessionCreateParams.CustomerUpdate.Address.AUTO)
+                                        .build()
+                        )
                         .build();
 
-
-        RequestOptions options = RequestOptions.builder()
-                .setStripeAccount(connectAccount.getStripeAccountId())
-                .build();
 
         return Session.create(params, options);
 
     }
 
+    private String getOrCreateStripeCustomer(String userId, String email, String name, RequestOptions options) {
+
+        return paymentCustomerRepository.findByUserIdAndStripeConnectedAccountId(userId, options.getStripeAccount())
+                .map(PaymentCustomer::getStripeCustomerId)
+                .orElseGet(() -> {
+                    try {
+                        CustomerCreateParams params = CustomerCreateParams.builder()
+                                .setEmail(email)
+                                .setName(name)
+                                .setMetadata(Map.of("localUserId", userId))
+                                .build();
+
+                        Customer customer = Customer.create(params, options);
+
+                        PaymentCustomer newCustomerEntity = PaymentCustomer.builder()
+                                .userId(userId)
+                                .stripeCustomerId(customer.getId())
+                                .stripeConnectedAccountId(options.getStripeAccount())
+                                .build();
+
+                        paymentCustomerRepository.save(newCustomerEntity);
+                        return customer.getId();
+                    } catch (StripeException e) {
+                        throw new RuntimeException("Error creating Stripe customer", e);
+                    }
+                });
+    }
 
 
 }

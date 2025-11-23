@@ -5,8 +5,10 @@ import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import demos.springdata.paymentservice.client.MonolithFeignClient;
+import demos.springdata.paymentservice.model.entity.PaymentCustomer;
 import demos.springdata.paymentservice.model.entity.PaymentTenant;
 import demos.springdata.paymentservice.model.enums.SubscriptionStatus;
+import demos.springdata.paymentservice.repository.PaymentCustomerRepository;
 import demos.springdata.paymentservice.repository.PaymentTenantRepository;
 import demos.springdata.paymentservice.web.dto.SubscriptionRequest;
 import jakarta.transaction.Transactional;
@@ -22,11 +24,13 @@ public class StripeWebhookService {
 
     private final MonolithFeignClient monolithClient;
     private final PaymentTenantRepository paymentTenantRepository;
+    private final PaymentCustomerRepository paymentCustomerRepository;
 
     @Autowired
-    public StripeWebhookService(MonolithFeignClient monolithClient, PaymentTenantRepository paymentTenantRepository) {
+    public StripeWebhookService(MonolithFeignClient monolithClient, PaymentTenantRepository paymentTenantRepository, PaymentCustomerRepository paymentCustomerRepository) {
         this.monolithClient = monolithClient;
         this.paymentTenantRepository = paymentTenantRepository;
+        this.paymentCustomerRepository = paymentCustomerRepository;
     }
 
     @Transactional
@@ -39,7 +43,7 @@ public class StripeWebhookService {
             return;
         }
 
-        if (event.getType().equals("checkout.session.completed")) {
+        if (event.getType().equals("checkout.session.completed") || event.getType().equals("charge.updated")) {
             handleCheckoutSessionCompleted((Session) stripeObject);
         } else {
             LOGGER.info("Unhandled event type: {}", event.getType());
@@ -62,18 +66,32 @@ public class StripeWebhookService {
             );
         } else if ("GYM_MEMBERSHIP".equals(type)) {
 
-            SubscriptionRequest request = new SubscriptionRequest
-                    (
-                            Integer.valueOf(session.getMetadata().get("allowedVisits")),
-                            session.getMetadata().get("subscriptionPlan"),
-                            session.getMetadata().get("employment")
-                    );
+            SubscriptionRequest request;
+            if (session.getMetadata().get("subscriptionPlan").equals("VISIT_PASS")) {
+                request = new SubscriptionRequest(Integer.valueOf(session.getMetadata().get("allowedVisits")), session.getMetadata().get("subscriptionPlan"), session.getMetadata().get("employment"));
+            } else {
+                request = new SubscriptionRequest(session.getMetadata().get("subscriptionPlan"), session.getMetadata().get("employment"));
+            }
 
-            monolithClient.activateUserMembership
-                    (session.getMetadata().get("userId"), request);
+            updateLocalCustomerSubscription(session);
+            monolithClient.activateUserMembership(session.getMetadata().get("userId"), request);
         } else {
             LOGGER.info("Unknown checkout type: {}", type);
         }
+    }
+
+    private void updateLocalCustomerSubscription(Session session) {
+        String userId = session.getMetadata().get("userId");
+
+        String customerId = session.getCustomer();
+        PaymentCustomer customer = paymentCustomerRepository.findByUserId(userId).orElseGet(() -> PaymentCustomer.builder()
+                .userId(userId)
+                .stripeCustomerId(customerId)
+                .build());
+
+        paymentCustomerRepository.save(customer);
+
+        LOGGER.info("Updated PaymentCustomer {} to ACTIVE status with plan {}", session.getCustomer(), session.getSubscription());
     }
 
 

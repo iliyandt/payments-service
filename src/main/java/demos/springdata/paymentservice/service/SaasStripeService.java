@@ -52,7 +52,6 @@ public class SaasStripeService {
 
         SessionCreateParams.Builder params = SessionCreateParams.builder()
                 .setCustomer(customerId)
-                //.setCustomerEmail(tenant.getBusinessEmail())
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setUiMode(SessionCreateParams.UiMode.HOSTED)
                 .setSuccessUrl("https://damilsoft.com/success?session_id={CHECKOUT_SESSION_ID}")
