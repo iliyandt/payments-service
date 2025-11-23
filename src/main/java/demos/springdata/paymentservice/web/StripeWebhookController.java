@@ -8,6 +8,11 @@ import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import demos.springdata.paymentservice.client.MonolithFeignClient;
 import demos.springdata.paymentservice.config.StripeProperties;
+import demos.springdata.paymentservice.model.entity.PaymentTenant;
+import demos.springdata.paymentservice.model.enums.SubscriptionStatus;
+import demos.springdata.paymentservice.repository.PaymentTenantRepository;
+import demos.springdata.paymentservice.service.SaasStripeService;
+import demos.springdata.paymentservice.service.StripeWebhookService;
 import demos.springdata.paymentservice.web.dto.SubscriptionRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,15 +25,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/stripe/webhook")
 public class StripeWebhookController {
 
-    private final MonolithFeignClient monolithClient;
     private final StripeProperties properties;
+    private final StripeWebhookService stripeWebhookService;
     private static final Logger LOGGER = LoggerFactory.getLogger(StripeWebhookController.class);
 
 
     @Autowired
-    public StripeWebhookController(MonolithFeignClient monolithClient, StripeProperties properties) {
-        this.monolithClient = monolithClient;
+    public StripeWebhookController(StripeProperties properties, StripeWebhookService stripeWebhookService) {
         this.properties = properties;
+        this.stripeWebhookService = stripeWebhookService;
     }
 
     @PostMapping
@@ -46,43 +51,8 @@ public class StripeWebhookController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }
 
-        EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
-        StripeObject stripeObject = dataObjectDeserializer.getObject().orElse(null);
-        if (stripeObject == null) {
-            LOGGER.error("Failed to deserialize event data. Event ID: {}", event.getId());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Deserialization failed");
-        }
-
         try {
-            switch (event.getType()) {
-                case "checkout.session.completed" -> {
-                    Session session = (Session) stripeObject;
-                    String type = session.getMetadata().get("type");
-
-                    if ("SAAS_SUBSCRIPTION".equals(type)) {
-                        monolithClient.activateTenantSubscription(
-                                session.getMetadata().get("tenantId"),
-                                session.getMetadata().get("planName"),
-                                session.getMetadata().get("abonnementDuration")
-                        );
-                    } else if ("GYM_MEMBERSHIP".equals(type)) {
-
-                        SubscriptionRequest request = new SubscriptionRequest
-                                (
-                                        Integer.valueOf(session.getMetadata().get("allowedVisits")),
-                                        session.getMetadata().get("subscriptionPlan"),
-                                        session.getMetadata().get("employment")
-                                );
-
-                        monolithClient.activateUserMembership
-                                (session.getMetadata().get("userId"), request);
-                    } else {
-                        LOGGER.info("Unknown checkout type: {}", type);
-                    }
-                }
-                default -> LOGGER.info("Unhandled event type: {}", event.getType());
-            }
-
+            stripeWebhookService.handleEvent(event);
             return ResponseEntity.ok("received");
         } catch (Exception ex) {
             LOGGER.error("Error while handling event {}", event.getId(), ex);

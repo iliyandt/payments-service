@@ -6,6 +6,7 @@ import com.stripe.model.checkout.Session;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import demos.springdata.paymentservice.model.entity.PaymentTenant;
+import demos.springdata.paymentservice.model.enums.SubscriptionStatus;
 import demos.springdata.paymentservice.repository.PaymentTenantRepository;
 import demos.springdata.paymentservice.web.dto.CheckoutRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +26,13 @@ public class SaasStripeService {
     public Session createSaasCheckoutSession(CheckoutRequest request) throws StripeException {
 
         PaymentTenant tenant = paymentTenantRepository.findByTenantId(request.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
+                .orElseGet(() -> PaymentTenant.builder()
+                        .tenantId(request.getTenantId())
+                        .status(SubscriptionStatus.INACTIVE)
+                        .build());
+
+        tenant.setBusinessEmail(request.getBusinessEmail());
+        tenant.setName(request.getTenantName());
 
         String customerId = tenant.getStripeCustomerId();
 
@@ -36,16 +43,17 @@ public class SaasStripeService {
                     .putMetadata("tenantId", String.valueOf(request.getTenantId()))
                     .build());
 
-            //TODO: какво става с другите полета в PaymentTenant? как да ги сетна и кога?
             customerId = customer.getId();
             tenant.setStripeCustomerId(customerId);
-            paymentTenantRepository.save(tenant);
         }
+
+        paymentTenantRepository.save(tenant);
 
 
         SessionCreateParams.Builder params = SessionCreateParams.builder()
-                .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setCustomer(customerId)
+                //.setCustomerEmail(tenant.getBusinessEmail())
+                .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setUiMode(SessionCreateParams.UiMode.HOSTED)
                 .setSuccessUrl("https://damilsoft.com/success?session_id={CHECKOUT_SESSION_ID}")
                 .setCancelUrl("https://damilsoft.com/cancel")

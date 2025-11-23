@@ -29,7 +29,8 @@ public class SecurityConfiguration {
         http.csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/api/v1/stripe/webhook", "/api/v1/payments/connect/**").permitAll()
+                        auth.requestMatchers(
+                                "/api/v1/stripe/webhook", "/api/v1/payments/connect/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
