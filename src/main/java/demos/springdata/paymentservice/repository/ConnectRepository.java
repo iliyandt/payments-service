@@ -10,4 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ConnectRepository extends JpaRepository<StripeConnectAccount, UUID> {
     Optional<StripeConnectAccount> findByStripeAccountId(String stripeAccountId);
+
+    Optional<StripeConnectAccount> findByTenantId(String tenantId);
 }

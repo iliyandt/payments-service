@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class ConnectStripeService {
 
@@ -30,6 +32,18 @@ public class ConnectStripeService {
     }
 
     public Account createConnectedAccount(TenantDto tenant) throws StripeException {
+
+        String tenantIdString = tenant.getId().toString();
+
+        Optional<StripeConnectAccount> existingEntry = connectRepository.findByTenantId(tenantIdString);
+
+        if (existingEntry.isPresent()) {
+            String existingStripeId = existingEntry.get().getStripeAccountId();
+            LOGGER.info("Tenant with ID {} already has a Stripe account: {}", tenantIdString, existingStripeId);
+
+            return Account.retrieve(existingStripeId);
+        }
+
         AccountCreateParams.Capabilities capabilities =
                 AccountCreateParams.Capabilities.builder()
                         .setCardPayments(
@@ -39,8 +53,6 @@ public class ConnectStripeService {
                                 AccountCreateParams.Capabilities.Transfers.builder().setRequested(true).build()
                         )
                         .build();
-
-        // TODO: Проверка дали вече има акаунт в базата на микросървиса
 
         AccountCreateParams params =
                 AccountCreateParams.builder()
