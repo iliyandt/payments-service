@@ -33,6 +33,4 @@ public class PaymentTenant {
 
     @Enumerated(EnumType.STRING)
     private SubscriptionStatus status;
-
-    private LocalDateTime currentPeriodEnd;
 }

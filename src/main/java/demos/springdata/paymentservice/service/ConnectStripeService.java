@@ -10,6 +10,7 @@ import com.stripe.param.AccountCreateParams;
 import com.stripe.param.AccountLinkCreateParams;
 import com.stripe.param.CustomerCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
+import demos.springdata.paymentservice.exception.PaymentException;
 import demos.springdata.paymentservice.model.entity.PaymentCustomer;
 import demos.springdata.paymentservice.model.entity.StripeConnectAccount;
 import demos.springdata.paymentservice.repository.ConnectRepository;
@@ -20,6 +21,7 @@ import demos.springdata.paymentservice.web.dto.TenantDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -89,10 +91,10 @@ public class ConnectStripeService {
         return account;
     }
 
-    public AccountLinkResponse createAccountLink(String tenantId, String returnUrl, String refreshUrl) throws StripeException {
+    public AccountLinkResponse createAccountLink(String connectedAccountId, String returnUrl, String refreshUrl) throws StripeException {
 
-        StripeConnectAccount connectAccount = connectRepository.findByStripeAccountId(tenantId)
-                .orElseThrow(() -> new RuntimeException("Tenant not connected to Stripe"));
+        StripeConnectAccount connectAccount = connectRepository.findByStripeAccountId(connectedAccountId)
+                .orElseThrow(() -> new PaymentException("Tenant not connected to Stripe", HttpStatus.NOT_FOUND));
 
         AccountLinkCreateParams params =
                 AccountLinkCreateParams.builder()

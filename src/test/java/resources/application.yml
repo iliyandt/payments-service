@@ -1,0 +1,65 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  application:
+    name: payment-service
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: ${JDBC_DATABASE_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:update}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    open-in-view: false
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+security:
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+    expiration-time: 3600000
+    refresh-token-expiration: 800600000
+
+stripe:
+  api-key: ${STRIPE_API_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  currency: eur
+
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: BASIC
+
+monolith:
+  url: http://localhost:8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    demos.springdata.paymentservice: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: INFO

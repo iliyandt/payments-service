@@ -39,11 +39,11 @@ public class PaymentController {
 
     @PostMapping("/connect/onboard")
     public AccountLinkResponse createAccountLink(
-            @RequestParam("tenantId") String tenantId,
+            @RequestParam("connectedAccountId") String connectedAccountId,
             @RequestParam("returnUrl") String returnUrl,
             @RequestParam("refreshUrl") String refreshUrl) throws StripeException {
 
-        return connectService.createAccountLink(tenantId, returnUrl, refreshUrl);
+        return connectService.createAccountLink(connectedAccountId, returnUrl, refreshUrl);
     }
 
     @PostMapping("/connect/create-account")
