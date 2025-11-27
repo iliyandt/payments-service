@@ -36,6 +36,12 @@ public class StripeWebhookService {
     @Transactional
     public void handleEvent(Event event) {
         EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
+
+        if (dataObjectDeserializer == null) {
+            LOGGER.error("Event deserializer is null for Event ID: {}", event.getId());
+            return;
+        }
+
         StripeObject stripeObject = dataObjectDeserializer.getObject().orElse(null);
 
         if (stripeObject == null) {
@@ -51,7 +57,7 @@ public class StripeWebhookService {
     }
 
 
-    public void handleCheckoutSessionCompleted(Session session) {
+    private void handleCheckoutSessionCompleted(Session session) {
 
         String type = session.getMetadata().get("type");
 
