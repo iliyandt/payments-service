@@ -1,0 +1,37 @@
+server:
+  port: ${PORT:8081}
+
+spring:
+  datasource:
+    # Heroku автоматично пълни тези JDBC променливи
+    url: ${JDBC_DATABASE_URL}
+    username: ${JDBC_DATABASE_USERNAME}
+    password: ${JDBC_DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+
+monolith:
+  url: ${MONOLITH_URL} # Взима се от Config Vars на Heroku
+
+stripe:
+  api-key: ${STRIPE_API_KEY}       # Взима се от Config Vars
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  currency: eur
+
+security:
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+logging:
+  level:
+    root: INFO
+    demos.springdata.paymentservice: INFO
+    org.hibernate.SQL: OFF
+    org.springframework.security: INFO

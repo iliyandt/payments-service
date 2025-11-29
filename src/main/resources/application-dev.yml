@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/payment_service
+    username: iliyan
+    password: secret
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+monolith:
+  url: http://localhost:8080
+
+stripe:
+  api-key: ${STRIPE_API_KEY}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET}
+  currency: eur
+
+security:
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+logging:
+  level:
+    root: INFO
+    demos.springdata.paymentservice: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.security: INFO
