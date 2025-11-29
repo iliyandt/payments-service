@@ -30,8 +30,15 @@ public class SecurityConfiguration {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(
-                                "/api/v1/stripe/webhook", "/api/v1/payments/connect/**").permitAll()
-                        .anyRequest().authenticated()
+                                        "/api/v1/stripe/webhook",
+                                        "/api/v1/payments/connect/**",
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs/**",
+                                        "/v3/api-docs",
+                                        "/v3/api-docs.yaml",
+                                        "/swagger-ui.html")
+                                .permitAll()
+                                .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
