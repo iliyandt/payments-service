@@ -3,7 +3,6 @@ server:
 
 spring:
   datasource:
-    # Heroku автоматично пълни тези JDBC променливи
     url: ${JDBC_DATABASE_URL}
     username: ${JDBC_DATABASE_USERNAME}
     password: ${JDBC_DATABASE_PASSWORD}
@@ -18,10 +17,10 @@ spring:
         format_sql: false
 
 monolith:
-  url: ${MONOLITH_URL} # Взима се от Config Vars на Heroku
+  url: ${MONOLITH_URL}
 
 stripe:
-  api-key: ${STRIPE_API_KEY}       # Взима се от Config Vars
+  api-key: ${STRIPE_API_KEY}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   currency: eur
 
