@@ -31,7 +31,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth ->
                         auth.requestMatchers(
                                         "/api/v1/stripe/webhook",
-                                        "/api/v1/payments/connect/**",
+                                       // "/api/v1/payments/connect/**",
                                         "/swagger-ui/**",
                                         "/v3/api-docs/**",
                                         "/v3/api-docs",
