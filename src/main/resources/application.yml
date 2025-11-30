@@ -29,6 +29,10 @@ feign:
         loggerLevel: BASIC
 
 
+security:
+  jwt:
+    secret-key: ${JWT_SECRET_KEY}
+
 management:
   endpoints:
     web:

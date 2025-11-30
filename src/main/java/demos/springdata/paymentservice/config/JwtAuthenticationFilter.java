@@ -1,6 +1,7 @@
 package demos.springdata.paymentservice.config;
 
 import demos.springdata.paymentservice.service.JwtService;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -27,10 +27,6 @@ stripe:
   webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   currency: eur
 
-security:
-  jwt:
-    secret: ${JWT_SECRET_KEY}
-
 logging:
   level:
     root: INFO
