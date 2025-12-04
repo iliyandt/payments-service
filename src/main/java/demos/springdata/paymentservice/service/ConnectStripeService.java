@@ -4,6 +4,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.AccountLink;
 import com.stripe.model.Customer;
+import com.stripe.model.StripeError;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.AccountCreateParams;
@@ -168,7 +169,18 @@ public class ConnectStripeService {
                         .build();
 
 
-        return Session.create(params, options);
+        try {
+            return Session.create(params, options);
+        } catch (StripeException ex) {
+            StripeError error = ex.getStripeError();
+
+            if ("account_invalid".equals(error.getCode()) || error.getMessage().contains("capabilities")) {
+                throw new PaymentException("Stripe Account Incomplete: " + error, HttpStatus.BAD_REQUEST
+                );
+            }
+            throw new PaymentException(error.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
 
     }
 
