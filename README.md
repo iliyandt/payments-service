@@ -12,10 +12,19 @@ To facilitate evaluation without Stripe access, a **bypass endpoint** is exposed
 2. Check the database or UI to find your `tenantId`.
 3. Execute the following cURL command (or use Postman):
 
+
+Tenant Subscription activation:
 ```bash
- # Replace '170' with your actual tenantId
-curl -X POST "http://localhost:8081/api/v1/debug/simulate-success/saas?tenantId=170&planName=PRO&duration=MONTHLY"
+ # Replace 'c5812dd1-61d8-4bc7-a253-bf791ada7bcf' with your actual tenantId
+curl -X POST "http://localhost:8081/api/v1/debug/simulate-success/saas?tenantId=c5812dd1-61d8-4bc7-a253-bf791ada7bcf&planName=PRO&duration=MONTHLY"
 ```
+
+Member Subscription Activation:
+```bash
+ # Replace 'c5812dd1-61d8-4bc7-a253-bf791ada7bcf' with your actual userId
+curl -X POST "http://localhost:8081/api/v1/debug/simulate-success/members?userId=c5812dd1-61d8-4bc7-a253-bf791ada7bcf"
+```
+
 
 # **Live Demo**
 
